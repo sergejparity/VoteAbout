@@ -1,6 +1,8 @@
 'use client';
 import dynamic from 'next/dynamic';
 import moment from 'moment';
+import Link from 'next/link';
+import NavBar from '../components/NavBar';
 
 
 const WalletBar = dynamic(() => import('../components/WalletBar'), { ssr: false })
@@ -42,15 +44,8 @@ const Page: React.FC = () => {
 
   // TO-DO 
   return (
-    <div className="h-screen flex flex-col top">
-      {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 w-full shadow-md py-4">
-        <div className="container mx-auto flex justify-between items-center px-4">
-          <h1 className="text-2xl font-bold">Vote About</h1>
-          <WalletBar />
-        </div>
-      </nav>
-
+<div className="h-screen flex flex-col top">
+<NavBar />
       <main className="container mx-auto mb-3 px-4 w-full mt-20">
         <div className="flex flex-col mb-8">
           <h1 className="font-bold text-3xl leading-normal">Vote About</h1>
