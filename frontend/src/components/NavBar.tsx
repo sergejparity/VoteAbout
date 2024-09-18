@@ -31,7 +31,7 @@ const NavBar: React.FC = () => {
           </Link>
         </div>
         <div className="ml-auto">
-          <WalletBar />
+          <WalletBar  />
         </div>
       </div>
     </nav>
