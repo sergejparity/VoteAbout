@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import moment from 'moment';
 
 
-const WalletBar = dynamic(() => import('../components/WalletBar'), { ssr: false })
+const WalletBar = dynamic(() => import('./WalletBar'), { ssr: false })
 const Page: React.FC = () => {
 
   const proposals = [
@@ -44,12 +44,8 @@ const Page: React.FC = () => {
   return (
 <div className="h-screen flex flex-col top">
       <main className="container mx-auto mb-3 px-4 w-full mt-20">
-        <div className="flex flex-col mb-8">
-          <h1 className="font-bold text-3xl leading-normal">Vote About</h1>
-          <p className="text-xl mt-5">Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloremque quo deleniti aspernatur ducimus nesciunt corrupti, deserunt vero quia, eum debitis facilis? Qui, ratione? Optio, eum quo nobis iste ducimus nemo.2</p>
-        </div>
         <div>
-          <h3 className="text-3xl mt-10 text-center text-gray-950 font-bold uppercase">Proposals</h3>
+          <h3 className="text-3xl mt-10 text-center text-gray-950 font-bold uppercase">Polls</h3>
           <div className="underline w-full border-gray-950 h-3 bg-black mt-3"></div>
           <div className="mt-6">
             {

@@ -1,7 +1,7 @@
 'use client';
 import NavBar from '../../components/NavBar'; 
 
-const CreateProposal: React.FC = () => {
+const CreatePoll: React.FC = () => {
   return (
     <div className="h-screen flex flex-col top">
         <NavBar />
@@ -11,4 +11,4 @@ const CreateProposal: React.FC = () => {
   );
 };
 
-export default CreateProposal;
+export default CreatePoll;

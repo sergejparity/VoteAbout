@@ -29,9 +29,9 @@ const Page: React.FC = () => {
               Dashboard
             </button>
           </Link>
-          <Link href="/create-proposal">
+          <Link href="/create-poll">
             <button className="py-2 px-4 hover:bg-bisque-700 transition">
-              Create Proposal
+              Create Poll
             </button>
           </Link>
           <Link href="/results">
@@ -55,9 +55,13 @@ const Page: React.FC = () => {
             <h2 className="text-4xl font-bold text-gray-800">
               Welcome to the VoteAbout
             </h2>
+            <p className="text-lg text-gray-600 mt-4 max-w-4xl text-justify">VoteAbout is a user-friendly dApp designed to simplify secure voting. Whether you're looking to create a poll, set a voting time interval, publish it, gather votes, or receive verifiable, on-chain results, VoteAbout makes the entire process seamless and transparent for everyone involved.</p>
             <p className="text-lg text-gray-600 mt-4">
               Please connect your wallet to access the dashboard.
             </p>
+            <div className="ml-auto">
+            <WalletBar onWalletConnect={handleWalletConnection} />
+          </div>
           </div>
         )}
       </main>

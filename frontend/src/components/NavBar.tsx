@@ -19,9 +19,9 @@ const NavBar: React.FC = () => {
               Dashboard
             </button>
           </Link>
-          <Link href="/create-proposal">
+          <Link href="/create-poll">
             <button className="py-2 px-4 hover:bg-bisque-700 transition">
-              Create Proposal
+              Create Poll
             </button>
           </Link>
           <Link href="/results">

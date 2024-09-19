@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import PollList from './ProposalList';
-import CreatePoll from './CreateProposal';
+import PollList from './PollList';
 import { useAccount } from "@starknet-react/core";
 import { useRouter } from "next/navigation";
 
@@ -21,10 +20,6 @@ const Dashboard: React.FC = () => {
   if (!address) {
     return <div className="flex justify-center items-center h-screen text-lg">Redirecting to home...</div>;
   }
-
-  const handleCreatePollClick = () => {
-    setShowCreatePoll(!showCreatePoll);
-  };
 
   return (
     <div className="container mx-auto p-4">
