@@ -1,5 +1,5 @@
 #[starknet::interface]
-trait IVoteAbout<TContractState> {
+pub trait IVoteAbout<TContractState> {
     fn add_candidate(ref self: TContractState, candidate_name: felt252) -> bool;
     fn register_voter(ref self: TContractState, voter_address: ContractAddress) -> bool;
     fn vote(ref self: TContractState, voter_address: ContractAddress, candidate_index: u8) -> bool;
