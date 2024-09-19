@@ -1,3 +1,15 @@
+#[starknet::interface]
+trait IVoting<TContractState> {
+    fn add_candidate(ref self: TContractState, candidate_name: felt252) -> bool;
+    fn register_voter(ref self: TContractState, voter_address: ContractAddress) -> bool;
+    fn vote(ref self: TContractState, voter_address: ContractAddress, candidate_index: u8) -> bool;
+    fn get_candidate(self: @TContractState, candidate_index: u8) -> Voting::Candidate;
+    fn get_candidate_vote(self: @TContractState, candidate_index: u8) -> u32;
+    fn winner(self: @TContractState) -> Voting::Candidate;
+    fn get_owner(self: @TContractState) -> ContractAddress;
+    fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
+}
+
 #[starknet::contract]
 pub mod voteabout{
 
@@ -48,18 +60,6 @@ pub mod voteabout{
     #[constructor]
     fn constructor(ref self: ContractState, initial_owner:ContractAddress) {
         self.ownable.initializer(initial_owner)
-    }
-
-    #[starknet::interface]
-    trait IVoting<TContractState> {
-        fn add_candidate(ref self: TContractState, candidate_name: felt252) -> bool;
-        fn register_voter(ref self: TContractState, voter_address: ContractAddress) -> bool;
-        fn vote(ref self: TContractState, voter_address: ContractAddress, candidate_index: u8) -> bool;
-        fn get_candidate(self: @TContractState, candidate_index: u8) -> Voting::Candidate;
-        fn get_candidate_vote(self: @TContractState, candidate_index: u8) -> u32;
-        fn winner(self: @TContractState) -> Voting::Candidate;
-        fn get_owner(self: @TContractState) -> ContractAddress;
-        fn transfer_ownership(ref self: TContractState, new_owner: ContractAddress);
     }
 
 }
