@@ -1,11 +1,24 @@
 "use client";
-import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
-import { useMemo } from "react";
-import { Button } from "./ui/Button";
 
-function WalletConnected() {
+import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
+import { useMemo, useEffect } from "react";
+import { Button } from "./ui/Button";
+import React from 'react';
+
+interface WalletBarProps {
+  onWalletConnect?: (status: boolean) => void;
+}
+
+function WalletConnected({ onWalletConnect }: WalletBarProps) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
+
+  // Notify parent about the connection status
+  useEffect(() => {
+    if (onWalletConnect) {
+      onWalletConnect(true);
+    }
+  }, [address, onWalletConnect]);
 
   const shortenedAddress = useMemo(() => {
     if (!address) return "";
@@ -41,8 +54,12 @@ function ConnectWallet() {
   );
 }
 
-export default function WalletBar() {
+export default function WalletBar({ onWalletConnect }: WalletBarProps) {
   const { address } = useAccount();
 
-  return address ? <WalletConnected /> : <ConnectWallet />;
+  return address ? (
+    <WalletConnected onWalletConnect={onWalletConnect} />
+  ) : (
+    <ConnectWallet />
+  );
 }
