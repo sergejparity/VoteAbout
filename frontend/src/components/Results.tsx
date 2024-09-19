@@ -29,7 +29,7 @@ const pollResults = [
     pollName: 'What is your Favorite Programming Language',
     candidates: [
       { name: 'JavaScript', votes: 150 },
-      { name: 'Rust', votes: 130 },
+      { name: 'Rust', votes:813 },
     ],
   },
 ];
