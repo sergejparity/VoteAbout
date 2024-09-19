@@ -1,15 +1,15 @@
 'use client';
-import NavBar from '../../components/NavBar'; 
+import NavBar from '@/components/NavBar';
+import CreatePoll from '@/components/CreatePoll';
 
-const CreatePoll: React.FC = () => {
+const CreatePollPage: React.FC = () => {
   return (
     <div className="h-screen flex flex-col top">
         <NavBar />
-      <h1 className="text-4xl font-bold">Create Proposal</h1>
-      <p className="text-lg mt-5">Add Poll</p>
       {/* Add Form for Creating new Proposal */}
+      <CreatePoll />
     </div>
   );
 };
 
-export default CreatePoll;
+export default CreatePollPage;
