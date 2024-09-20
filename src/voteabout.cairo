@@ -21,11 +21,23 @@ mod VoteAbout {
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess
     };
+    use OwnableComponent::InternalTrait;
+    use openzeppelin::access::ownable::OwnableComponent;
+    use core::starknet::event::EventEmitter;
+
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
+
+    #[abi(embed_v0)]
+    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
+    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
         votes: Map<u32, VoteNode>,
         vote_count: u32,
+        
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage
     }
 
     #[starknet::storage_node]
@@ -37,9 +49,18 @@ mod VoteAbout {
         voters: Map<ContractAddress, bool>,
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+
+        #[flat]
+        OwnableEvent: OwnableComponent::Event
+    }
+
     #[constructor]
-    fn constructor(ref self: ContractState) {
+    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
         self.vote_count.write(0);
+        self.ownable.initializer(initial_owner)
     }
 
     #[abi(embed_v0)]
