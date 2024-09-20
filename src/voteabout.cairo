@@ -2,13 +2,15 @@
 trait IVoteAbout<TContractState> {
     fn create_vote(ref self: TContractState, title: felt252, description: felt252) -> u32;
 
-    fn add_candidate(ref self: TContractState, vote_id: u32, candidateId: u32, candidate_name: felt252);
+    fn add_candidate(
+        ref self: TContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
+    );
 
     fn get_canditate_count(self: @TContractState, vote_id: u32) -> u32;
 
     fn vote(ref self: TContractState, vote_id: u32, vote: bool);
 
-    fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252, );
+    fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252,);
 
     //fn get_voter_has_voted(self: @TContractState, vote_id: u32) -> (ContractAddress, bool);
 
@@ -18,6 +20,7 @@ trait IVoteAbout<TContractState> {
 #[starknet::contract]
 mod VoteAbout {
     use starknet::{ContractAddress, get_caller_address};
+    use core::starknet::event::EventEmitter;
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess
     };
@@ -42,32 +45,56 @@ mod VoteAbout {
         self.vote_count.write(0);
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        // #[flat]
+        // OwnableEvent: ownable_component::Event,
+        VoteCreated: VoteCreated,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct VoteCreated {
+        #[key]
+        vote_id: u32,
+        title: felt252,
+        description: felt252,
+    }
+
     #[abi(embed_v0)]
     impl IVoteAboutImpl of super::IVoteAbout<ContractState> {
-
+        #[derive(Drop, starknet::Event)]
         fn create_vote(ref self: ContractState, title: felt252, description: felt252) -> u32 {
             let mut vote_count = self.vote_count.read();
             let new_vote_id = vote_count + 1;
-    
+
             let mut vote = self.votes.entry(new_vote_id);
             vote.title.write(title);
             vote.description.write(description);
             vote.candidates_count.write(0);
             self.vote_count.write(new_vote_id);
+
+            self.emit(Event::VoteCreated(VoteCreated {
+                vote_id: new_vote_id,
+                title: title,
+                description: description,
+            }));
             new_vote_id
         }
 
-        fn add_candidate(ref self: ContractState, vote_id: u32, candidateId: u32, candidate_name: felt252) {
+        fn add_candidate(
+            ref self: ContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
+        ) {
             let mut vote = self.votes.entry(vote_id);
             vote.candidates.entry(candidateId).entry(candidate_name).write(0);
             vote.candidates_count.write(vote.candidates_count.read() + 1);
         }
-    
+
         fn get_canditate_count(self: @ContractState, vote_id: u32) -> u32 {
             let vote = self.votes.entry(vote_id);
             vote.candidates_count.read()
         }
-    
+
         fn vote(ref self: ContractState, vote_id: u32, vote: bool) {
             let mut vote = self.votes.entry(vote_id);
             let caller = get_caller_address();
@@ -77,24 +104,20 @@ mod VoteAbout {
             }
             vote.voters.entry(caller).write(true);
         }
-    
-        fn get_vote_details(self: @ContractState, vote_id: u32) -> (felt252, felt252, ) {
+
+        fn get_vote_details(self: @ContractState, vote_id: u32) -> (felt252, felt252,) {
             let vote = self.votes.entry(vote_id);
-            (
-                vote.title.read(),
-                vote.description.read(),
-            )
+            (vote.title.read(), vote.description.read(),)
         }
-    
+
         // fn get_voter_has_voted(self: @ContractState, vote_id: u32) -> (ContractAddress, bool) {
         //     let vote = self.votes.entry(vote_id);
         //     let caller = get_caller_address();
         //     (caller, vote.voters.entry(caller).read())
         // }
-    
+
         fn get_vote_count(self: @ContractState,) -> u32 {
             self.vote_count.read()
         }
     }
-
 }
