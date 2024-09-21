@@ -1,0 +1,26 @@
+name: Build contract
+# This workflow runs `scarb build' every pull request and push to the main branch
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_contract:
+    name: Build contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.8.0"
+
+      - uses: foundry-rs/setup-snfoundry@v3
+        with:
+          starknet-foundry-version: "v0.27.0"
+
+      - name: Build contract
+        run: scarb build
