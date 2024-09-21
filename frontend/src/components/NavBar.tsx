@@ -14,7 +14,7 @@ const NavBar: React.FC = () => {
         <Link href="/">
           <h1 className="text-2xl font-bold">Vote About</h1>
           </Link>
-          <Link href="/">
+          <Link href="/dashboard">
             <button className="py-2 px-4 hover:bg-bisque-700 transition">
               Dashboard
             </button>

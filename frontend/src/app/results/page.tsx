@@ -1,12 +1,14 @@
 'use client';
-import NavBar from "@/components/NavBar";
 import ResultsPage from "@/components/Results";
+import RequireWallet from "@/components/RequireWallet";
 
 const CreatePoll: React.FC = () => {
   return (
     <div className="h-screen flex flex-col top">
-        <NavBar />
+      <RequireWallet>
       <ResultsPage />
+      </RequireWallet>
+      
     </div>
   );
 };
