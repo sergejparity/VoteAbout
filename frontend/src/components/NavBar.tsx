@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/router'; 
 import dynamic from 'next/dynamic';
-import { HomeIcon, ChartBarIcon, PlusCircleIcon, DocumentTextIcon } from '@heroicons/react/24/outline'; // Importing icons
-
+import { HomeIcon, ChartBarIcon, PlusCircleIcon, DocumentTextIcon } from '@heroicons/react/24/outline'; 
 const NavBar: React.FC = () => {
   const WalletBar = dynamic(() => import('../components/WalletBar'), { ssr: false });
 
