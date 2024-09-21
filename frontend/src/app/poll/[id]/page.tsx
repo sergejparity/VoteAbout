@@ -1,5 +1,3 @@
-import { useRouter } from 'next/navigation';
-import NavBar from '@/components/NavBar';
 import ViewDetails from '@/components/ViewDetails';
 
 const PollPage = ({ params }: { params: { id: string } }) => {
@@ -7,7 +5,6 @@ const PollPage = ({ params }: { params: { id: string } }) => {
 
     return (
         <div className="h-screen flex flex-col top">
-            <NavBar />
             <ViewDetails />
         </div>
     );
