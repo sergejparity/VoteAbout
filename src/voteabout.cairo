@@ -1,10 +1,11 @@
 #[starknet::interface]
 trait IVoteAbout<TContractState> {
-    fn create_vote(ref self: TContractState, title: felt252, description: felt252) -> u32;
+    fn create_vote(ref self: TContractState, title: felt252, description: felt252, candidates: Map<u32, felt252>) -> u32;
 
-    fn add_candidate(
-        ref self: TContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
-    );
+    // function arguments now parsed in create_vote
+    //fn add_candidate(
+    //    ref self: TContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
+   // );
 
     fn get_canditate_count(self: @TContractState, vote_id: u32) -> u32;
 
@@ -85,14 +86,18 @@ mod VoteAbout {
     #[abi(embed_v0)]
     impl IVoteAboutImpl of super::IVoteAbout<ContractState> {
         #[derive(Drop, starknet::Event)]
-        fn create_vote(ref self: ContractState, title: felt252, description: felt252) -> u32 {
+        fn create_vote(ref self: ContractState, title: felt252, description: felt252, candidates: Map<u32, felt252>) -> u32 {
             let mut vote_count = self.vote_count.read();
             let new_vote_id = vote_count + 1;
-
             let mut vote = self.votes.entry(new_vote_id);
+            vote.candidates_count.write(0);
             vote.title.write(title);
             vote.description.write(description);
-            vote.candidates_count.write(0);
+
+            let candidate_count = self.add_candidates(new_vote_id, candidates);
+            vote.candidates_count.write(candidate_count);
+
+            //vote.candidates_count.write(0);
             self.vote_count.write(new_vote_id);
 
             self.emit(Event::VoteCreated(VoteCreated {
@@ -103,13 +108,14 @@ mod VoteAbout {
             new_vote_id
         }
 
-        fn add_candidate(
-            ref self: ContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
-        ) {
-            let mut vote = self.votes.entry(vote_id);
-            vote.candidates.entry(candidateId).entry(candidate_name).write(0);
-            vote.candidates_count.write(vote.candidates_count.read() + 1);
-        }
+        // fn add_candidate implemented outside the exposed interface
+        //fn add_candidate(
+        //    ref self: ContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
+        //) {
+        //    let mut vote = self.votes.entry(vote_id);
+        //    vote.candidates.entry(candidateId).entry(candidate_name).write(0);
+        //    vote.candidates_count.write(vote.candidates_count.read() + 1);
+        //}
 
         fn get_canditate_count(self: @ContractState, vote_id: u32) -> u32 {
             let vote = self.votes.entry(vote_id);
@@ -120,9 +126,7 @@ mod VoteAbout {
             let mut vote = self.votes.entry(vote_id);
             let caller = get_caller_address();
             let has_voted = vote.voters.entry(caller).read();
-            if has_voted {
-                return;
-            }
+            assert!(!has_voted, "Caller has already voted."); 
             vote.voters.entry(caller).write(true);
         }
 
@@ -139,6 +143,22 @@ mod VoteAbout {
 
         fn get_vote_count(self: @ContractState,) -> u32 {
             self.vote_count.read()
+        }
+    }
+
+
+    #[generate_trait]
+    impl PrivateFunctions of PrivateFunctionsTrait {
+        fn add_candidates(ref self: ContractState, vote_id: u32, candidates: Map<u32, felt252>) -> u32 {
+            let mut vote = self.votes.entry(vote_id);
+            let mut candidate_count = 0;
+            for (candidate_id, candidate_name) in candidates{
+                let mut candidate_info = Map::new();
+                candidate_info.entry(candidate_name).write(0);
+                vote.candidates.entry(candidate_id).write(candidate_info);
+                candidate_count += 1;
+            }
+            candidate_count
         }
     }
 }
