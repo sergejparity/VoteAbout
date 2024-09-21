@@ -26,7 +26,6 @@ mod VoteAbout {
     };
     use OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::OwnableComponent;
-    use core::starknet::event::EventEmitter;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
@@ -38,7 +37,6 @@ mod VoteAbout {
     struct Storage {
         votes: Map<u32, VoteNode>,
         vote_count: u32,
-        
         #[substorage(v0)]
         ownable: OwnableComponent::Storage
     }
@@ -52,14 +50,6 @@ mod VoteAbout {
         voters: Map<ContractAddress, bool>,
     }
 
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    enum Event {
-
-        #[flat]
-        OwnableEvent: OwnableComponent::Event
-    }
-
     #[constructor]
     fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
         self.vote_count.write(0);
@@ -69,8 +59,8 @@ mod VoteAbout {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        // #[flat]
-        // OwnableEvent: ownable_component::Event,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
         VoteCreated: VoteCreated,
     }
 
@@ -95,11 +85,14 @@ mod VoteAbout {
             vote.candidates_count.write(0);
             self.vote_count.write(new_vote_id);
 
-            self.emit(Event::VoteCreated(VoteCreated {
-                vote_id: new_vote_id,
-                title: title,
-                description: description,
-            }));
+            self
+                .emit(
+                    Event::VoteCreated(
+                        VoteCreated {
+                            vote_id: new_vote_id, title: title, description: description,
+                        }
+                    )
+                );
             new_vote_id
         }
 
