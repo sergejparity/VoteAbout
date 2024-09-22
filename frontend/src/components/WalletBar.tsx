@@ -3,6 +3,7 @@
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { useMemo, useEffect } from "react";
 import { Button } from "./ui/Button";
+import { UserIcon } from '@heroicons/react/24/solid'; // Importing the user icon
 import React from 'react';
 
 interface WalletBarProps {
@@ -26,9 +27,12 @@ function WalletConnected({ onWalletConnect }: WalletBarProps) {
   }, [address]);
 
   return (
-    <div>
-      <span>Connected: {shortenedAddress}</span>
-      <button onClick={() => disconnect()}>Disconnect</button>
+    <div className="flex items-center space-x-2">
+      <UserIcon className="h-6 w-6 text-gray-800 dark:text-gray-200" />
+      <span className="text-gray-800 dark:text-gray-200">{shortenedAddress}</span>
+      <Button onClick={() => disconnect()} className="ml-2 bg-red-500 text-white hover:bg-red-600">
+        Disconnect
+      </Button>
     </div>
   );
 }
@@ -38,18 +42,16 @@ function ConnectWallet() {
 
   return (
     <div>
-      <span>Login with wallet: </span>
-      {connectors.map((connector) => {
-        return (
-          <Button
-            key={connector.id}
-            onClick={() => connect({ connector })}
-            className="gap-x-2 mr-2"
-          >
-            {connector.id}
-          </Button>
-        );
-      })}
+      <span className="text-gray-800 dark:text-gray-200">Login with wallet: </span>
+      {connectors.map((connector) => (
+        <Button
+          key={connector.id}
+          onClick={() => connect({ connector })}
+          className="gap-x-2 mr-2"
+        >
+          {connector.id}
+        </Button>
+      ))}
     </div>
   );
 }
