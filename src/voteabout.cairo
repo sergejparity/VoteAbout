@@ -29,7 +29,10 @@ mod VoteAbout {
     };
     use OwnableComponent::InternalTrait;
     use openzeppelin::access::ownable::OwnableComponent;
+<<<<<<< HEAD
     //use core::starknet::event::EventEmitter; used twice
+=======
+>>>>>>> origin/voteaboutAssert
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
@@ -41,7 +44,6 @@ mod VoteAbout {
     struct Storage {
         votes: Map<u32, VoteNode>,
         vote_count: u32,
-        
         #[substorage(v0)]
         ownable: OwnableComponent::Storage
     }
@@ -56,10 +58,24 @@ mod VoteAbout {
         voting_end_time: u64,
     }
 
+<<<<<<< HEAD
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
         VoteCast: VoteCast,
+=======
+    #[constructor]
+    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
+        self.vote_count.write(0);
+        self.ownable.initializer(initial_owner)
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
+>>>>>>> origin/voteaboutAssert
         VoteCreated: VoteCreated,
         #[flat]
         OwnableEvent: OwnableComponent::Event   
@@ -115,6 +131,7 @@ mod VoteAbout {
                 description: description,
                 voting_end_time: voting_end_time,
             }));
+
             new_vote_id
         }
 
