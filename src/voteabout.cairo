@@ -1,11 +1,11 @@
 #[starknet::interface]
 trait IVoteAbout<TContractState> {
-    fn create_vote(ref self: TContractState, title: felt252, description: felt252, candidates: Span<felt252>, voting_delay: u64, voting_period: u64) -> u32;
+    fn create_vote(ref self: TContractState, title: felt252, description: felt252, candidates: Array<ByteArray>, voting_delay: u64, voting_period: u64) -> u32;
     fn get_candidate_count(self: @TContractState, vote_id: u32) -> u32;
     fn vote(ref self: TContractState, vote_id: u32, candidate_id: u32);
     fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252, u64, u64);
     fn get_vote_count(self: @TContractState) -> u32;
-    fn get_vote_results(self: @TContractState, vote_id: u32) -> Span<(felt252, u32)>;
+    fn get_vote_results(self: @TContractState, vote_id: u32) -> Array<(ByteArray, u32)>;
     fn is_voting_active(self: @TContractState, vote_id: u32) -> bool;
 }
 
@@ -13,7 +13,7 @@ trait IVoteAbout<TContractState> {
 mod VoteAbout {
     use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use core::starknet::event::EventEmitter;
-    use core::array::SpanTrait;
+    use core::array::ArrayTrait;
     use core::box::BoxTrait;
     use core::option::OptionTrait;
     use core::traits::TryInto;
@@ -30,7 +30,7 @@ mod VoteAbout {
     struct Storage {
         votes: starknet::storage::Map<u32, VoteNode>,
         vote_count: u32,
-        candidates: starknet::storage::Map<(u32, u32), felt252>,
+        candidates: starknet::storage::Map<(u32, u32), ByteArray>,
         votes_cast: starknet::storage::Map<(u32, u32), u32>,
         voters: starknet::storage::Map<(u32, ContractAddress), bool>,
         #[substorage(v0)]
@@ -85,7 +85,7 @@ mod VoteAbout {
             ref self: ContractState,
             title: felt252,
             description: felt252,
-            candidates: Span<felt252>,
+            candidates: Array<ByteArray>,
             voting_delay: u64,
             voting_period: u64
         ) -> u32 {
@@ -106,13 +106,9 @@ mod VoteAbout {
 
             self.votes.write(vote_count, vote.clone());
 
-            let mut i: u32 = 0;
-            loop {
-                if i >= candidates.len() {
-                    break;
-                }
-                self.candidates.write((vote_count, i), *candidates.at(i.into()));
-                i += 1;
+            for i in 0..candidates.len() {
+                let candidate = candidates.at(i); 
+                self.candidates.write((vote_count, i), candidate.clone());
             };
 
             self.emit(Event::VoteCreated(VoteCreated {
@@ -137,7 +133,7 @@ mod VoteAbout {
             
             assert!(current_time >= vote.voting_start_time, "Voting has not started yet");
             assert!(current_time <= vote.voting_end_time, "Voting period has ended");
-            assert!(!self.voters.read((vote_id, caller)), "Caller has already voted");
+            assert!(!self.voters.read((vote_id, caller)), "Voter has already voted");
             
             let current_votes = self.votes_cast.read((vote_id, candidate_id));
             self.votes_cast.write((vote_id, candidate_id), current_votes + 1);
@@ -159,20 +155,15 @@ mod VoteAbout {
             self.vote_count.read()
         }
 
-        fn get_vote_results(self: @ContractState, vote_id: u32) -> Span<(felt252, u32)> {
+        fn get_vote_results(self: @ContractState, vote_id: u32) -> Array<(ByteArray, u32)> {
             let vote = self.votes.read(vote_id);
             let mut results = ArrayTrait::new();
-            let mut i: u32 = 0;
-            loop {
-                if i >= vote.candidates_count {
-                    break;
-                }
+            for i in 0..vote.candidates_count {
                 let candidate = self.candidates.read((vote_id, i));
                 let votes = self.votes_cast.read((vote_id, i));
-                results.append((candidate, votes));
-                i += 1;
+                results.append((candidate.clone(), votes));
             };
-            results.span()
+            results
         }
 
         fn is_voting_active(self: @ContractState, vote_id: u32) -> bool {
