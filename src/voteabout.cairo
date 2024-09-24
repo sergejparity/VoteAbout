@@ -74,7 +74,8 @@ mod VoteAbout {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
+    fn constructor(ref self: ContractState) {
+        let initial_owner = get_caller_address();
         self.vote_count.write(0);
         self.ownable.initializer(initial_owner);
     }
