@@ -1,67 +1,58 @@
 #[starknet::interface]
 trait IVoteAbout<TContractState> {
-    fn create_vote(ref self: TContractState, title: felt252, description: felt252) -> u32;
-
-    fn add_candidate(
-        ref self: TContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
-    );
-
-    fn get_canditate_count(self: @TContractState, vote_id: u32) -> u32;
-
-    fn vote(ref self: TContractState, vote_id: u32, vote: bool);
-
-    fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252,);
-
-    //fn get_voter_has_voted(self: @TContractState, vote_id: u32) -> (ContractAddress, bool);
-
-    fn get_vote_count(self: @TContractState,) -> u32;
+    fn create_vote(ref self: TContractState, title: felt252, description: felt252, candidates: Span<felt252>, voting_delay: u64, voting_period: u64) -> u32;
+    fn get_candidate_count(self: @TContractState, vote_id: u32) -> u32;
+    fn vote(ref self: TContractState, vote_id: u32, candidate_id: u32);
+    fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252, u64, u64);
+    fn get_vote_count(self: @TContractState) -> u32;
+    fn get_vote_results(self: @TContractState, vote_id: u32) -> Span<(felt252, u32)>;
+    fn is_voting_active(self: @TContractState, vote_id: u32) -> bool;
 }
 
 #[starknet::contract]
 mod VoteAbout {
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use core::starknet::event::EventEmitter;
-    use core::starknet::storage::{
-        Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess
-    };
-    use OwnableComponent::InternalTrait;
+    use core::array::SpanTrait;
+    use core::box::BoxTrait;
+    use core::option::OptionTrait;
+    use core::traits::TryInto;
+    use core::traits::Into;
     use openzeppelin::access::ownable::OwnableComponent;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     #[abi(embed_v0)]
     impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
-    impl InternalImpl = OwnableComponent::InternalImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[storage]
     struct Storage {
-        votes: Map<u32, VoteNode>,
+        votes: starknet::storage::Map<u32, VoteNode>,
         vote_count: u32,
+        candidates: starknet::storage::Map<(u32, u32), felt252>,
+        votes_cast: starknet::storage::Map<(u32, u32), u32>,
+        voters: starknet::storage::Map<(u32, ContractAddress), bool>,
         #[substorage(v0)]
         ownable: OwnableComponent::Storage
     }
 
-    #[starknet::storage_node]
+    #[derive(Drop, Serde, starknet::Store, Clone)]
     struct VoteNode {
         title: felt252,
         description: felt252,
-        candidates: Map<u32, Map<felt252, u32>>, // <candidateId <candidate name, vote count>>
         candidates_count: u32,
-        voters: Map<ContractAddress, bool>,
-    }
-
-    #[constructor]
-    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
-        self.vote_count.write(0);
-        self.ownable.initializer(initial_owner)
+        voting_start_time: u64,
+        voting_end_time: u64,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        #[flat]
-        OwnableEvent: OwnableComponent::Event,
+    enum Event {
+        VoteCast: VoteCast,
         VoteCreated: VoteCreated,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event   
     }
 
     #[derive(Drop, starknet::Event)]
@@ -70,68 +61,124 @@ mod VoteAbout {
         vote_id: u32,
         title: felt252,
         description: felt252,
+        voting_start_time: u64,
+        voting_end_time: u64,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct VoteCast {
+        #[key]
+        vote_id: u32,
+        voter: ContractAddress,
+        candidate_id: u32,
+    }
+
+    #[constructor]
+    fn constructor(ref self: ContractState, initial_owner: ContractAddress) {
+        self.vote_count.write(0);
+        self.ownable.initializer(initial_owner);
     }
 
     #[abi(embed_v0)]
     impl IVoteAboutImpl of super::IVoteAbout<ContractState> {
-        #[derive(Drop, starknet::Event)]
-        fn create_vote(ref self: ContractState, title: felt252, description: felt252) -> u32 {
-            let mut vote_count = self.vote_count.read();
-            let new_vote_id = vote_count + 1;
+        fn create_vote(
+            ref self: ContractState,
+            title: felt252,
+            description: felt252,
+            candidates: Span<felt252>,
+            voting_delay: u64,
+            voting_period: u64
+        ) -> u32 {
+            let mut vote_count = self.vote_count.read() + 1;
+            self.vote_count.write(vote_count);
 
-            let mut vote = self.votes.entry(new_vote_id);
-            vote.title.write(title);
-            vote.description.write(description);
-            vote.candidates_count.write(0);
-            self.vote_count.write(new_vote_id);
+            let current_time = get_block_timestamp();
+            let voting_start_time = current_time + voting_delay;
+            let voting_end_time = voting_start_time + voting_period;
 
-            self
-                .emit(
-                    Event::VoteCreated(
-                        VoteCreated {
-                            vote_id: new_vote_id, title: title, description: description,
-                        }
-                    )
-                );
-            new_vote_id
+            let vote = VoteNode {
+                title,
+                description,
+                candidates_count: candidates.len(),
+                voting_start_time,
+                voting_end_time,
+            };
+
+            self.votes.write(vote_count, vote.clone());
+
+            let mut i: u32 = 0;
+            loop {
+                if i >= candidates.len() {
+                    break;
+                }
+                self.candidates.write((vote_count, i), *candidates.at(i.into()));
+                i += 1;
+            };
+
+            self.emit(Event::VoteCreated(VoteCreated {
+                vote_id: vote_count,
+                title,
+                description,
+                voting_start_time,
+                voting_end_time,
+            }));
+            vote_count
         }
 
-        fn add_candidate(
-            ref self: ContractState, vote_id: u32, candidateId: u32, candidate_name: felt252
-        ) {
-            let mut vote = self.votes.entry(vote_id);
-            vote.candidates.entry(candidateId).entry(candidate_name).write(0);
-            vote.candidates_count.write(vote.candidates_count.read() + 1);
+        fn get_candidate_count(self: @ContractState, vote_id: u32) -> u32 {
+            let vote = self.votes.read(vote_id);
+            vote.candidates_count
         }
 
-        fn get_canditate_count(self: @ContractState, vote_id: u32) -> u32 {
-            let vote = self.votes.entry(vote_id);
-            vote.candidates_count.read()
-        }
-
-        fn vote(ref self: ContractState, vote_id: u32, vote: bool) {
-            let mut vote = self.votes.entry(vote_id);
+        fn vote(ref self: ContractState, vote_id: u32, candidate_id: u32) {
+            let vote = self.votes.read(vote_id);
             let caller = get_caller_address();
-            let has_voted = vote.voters.entry(caller).read();
-            if has_voted {
-                return;
-            }
-            vote.voters.entry(caller).write(true);
+            let current_time = get_block_timestamp();
+            
+            assert!(current_time >= vote.voting_start_time, "Voting has not started yet");
+            assert!(current_time <= vote.voting_end_time, "Voting period has ended");
+            assert!(!self.voters.read((vote_id, caller)), "Caller has already voted");
+            
+            let current_votes = self.votes_cast.read((vote_id, candidate_id));
+            self.votes_cast.write((vote_id, candidate_id), current_votes + 1);
+            self.voters.write((vote_id, caller), true);
+
+            self.emit(Event::VoteCast(VoteCast {
+                vote_id,
+                voter: caller,
+                candidate_id,
+            }));
         }
 
-        fn get_vote_details(self: @ContractState, vote_id: u32) -> (felt252, felt252,) {
-            let vote = self.votes.entry(vote_id);
-            (vote.title.read(), vote.description.read(),)
+        fn get_vote_details(self: @ContractState, vote_id: u32) -> (felt252, felt252, u64, u64) {
+            let vote = self.votes.read(vote_id);
+            (vote.title, vote.description, vote.voting_start_time, vote.voting_end_time)
         }
 
-        // fn get_voter_has_voted(self: @ContractState, vote_id: u32) -> (ContractAddress, bool) {
-        //     let vote = self.votes.entry(vote_id);
-        //     let caller = get_caller_address();
-        //     (caller, vote.voters.entry(caller).read())
-        // }
-
-        fn get_vote_count(self: @ContractState,) -> u32 {
+        fn get_vote_count(self: @ContractState) -> u32 {
             self.vote_count.read()
+        }
+
+        fn get_vote_results(self: @ContractState, vote_id: u32) -> Span<(felt252, u32)> {
+            let vote = self.votes.read(vote_id);
+            let mut results = ArrayTrait::new();
+            let mut i: u32 = 0;
+            loop {
+                if i >= vote.candidates_count {
+                    break;
+                }
+                let candidate = self.candidates.read((vote_id, i));
+                let votes = self.votes_cast.read((vote_id, i));
+                results.append((candidate, votes));
+                i += 1;
+            };
+            results.span()
+        }
+
+        fn is_voting_active(self: @ContractState, vote_id: u32) -> bool {
+            let vote = self.votes.read(vote_id);
+            let current_time = get_block_timestamp();
+            current_time >= vote.voting_start_time && current_time <= vote.voting_end_time
         }
     }
 }
