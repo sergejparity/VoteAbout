@@ -1,11 +1,11 @@
 #[starknet::interface]
 trait IVoteAbout<TContractState> {
-    fn create_vote(ref self: TContractState, title: felt252, description: felt252, candidates: Span<felt252>, voting_delay: u64, voting_period: u64) -> u32;
+    fn create_vote(ref self: TContractState, title: felt252, description: felt252, candidates: Span<ByteArray>, voting_delay: u64, voting_period: u64) -> u32;
     fn get_candidate_count(self: @TContractState, vote_id: u32) -> u32;
     fn vote(ref self: TContractState, vote_id: u32, candidate_id: u32);
     fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252, u64, u64);
     fn get_vote_count(self: @TContractState) -> u32;
-    fn get_vote_results(self: @TContractState, vote_id: u32) -> Span<(felt252, u32)>;
+    fn get_vote_results(self: @TContractState, vote_id: u32) -> Span<(ByteArray, u32)>;
     fn is_voting_active(self: @TContractState, vote_id: u32) -> bool;
 }
 
@@ -19,6 +19,9 @@ mod VoteAbout {
     use core::traits::TryInto;
     use core::traits::Into;
     use openzeppelin::access::ownable::OwnableComponent;
+    use core::clone::Clone;
+    use core::array::ArrayTrait;
+    use core::byte_array::ByteArray;
 
     component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
@@ -30,7 +33,7 @@ mod VoteAbout {
     struct Storage {
         votes: starknet::storage::Map<u32, VoteNode>,
         vote_count: u32,
-        candidates: starknet::storage::Map<(u32, u32), felt252>,
+        candidates: starknet::storage::Map<(u32, u32), ByteArray>,
         votes_cast: starknet::storage::Map<(u32, u32), u32>,
         voters: starknet::storage::Map<(u32, ContractAddress), bool>,
         #[substorage(v0)]
@@ -86,11 +89,12 @@ mod VoteAbout {
             ref self: ContractState,
             title: felt252,
             description: felt252,
-            candidates: Span<felt252>,
+            candidates: Span<ByteArray>,
             voting_delay: u64,
             voting_period: u64
         ) -> u32 {
-            let mut vote_count = self.vote_count.read() + 1;
+            let mut vote_count = self.vote_count.read();
+            vote_count += 1;
             self.vote_count.write(vote_count);
 
             let current_time = get_block_timestamp();
@@ -112,7 +116,8 @@ mod VoteAbout {
                 if i >= candidates.len() {
                     break;
                 }
-                self.candidates.write((vote_count, i), *candidates.at(i.into()));
+                let candidate = candidates.at(i.into());
+                self.candidates.write((vote_count, i), candidate.clone());
                 i += 1;
             };
 
@@ -160,7 +165,7 @@ mod VoteAbout {
             self.vote_count.read()
         }
 
-        fn get_vote_results(self: @ContractState, vote_id: u32) -> Span<(felt252, u32)> {
+        fn get_vote_results(self: @ContractState, vote_id: u32) -> Span<(ByteArray, u32)> {
             let vote = self.votes.read(vote_id);
             let mut results = ArrayTrait::new();
             let mut i: u32 = 0;
