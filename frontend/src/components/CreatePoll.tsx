@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   useAccount,
   useContract,
@@ -17,16 +17,37 @@ function CreatePollInner() {
   const [pollName, setPollName] = useState('');
   const [pollDescription, setPollDescription] = useState('');
   const [candidates, setCandidates] = useState<string[]>(['']);
-  const [votingPeriod, setVotingPeriod] = useState('');
+  const [votingPeriod, setVotingPeriod] = useState<string>('');  // Store voting period
+  const [votingDelay, setVotingDelay] = useState<string>('');    // Store voting delay
+  const [votingStart, setVotingStart] = useState('');            // Start time
+  const [votingEnd, setVotingEnd] = useState('');                 //End time
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transactionCall, setTransactionCall] = useState<any>(null);
   const { data: blockno, error: blockerror } = useBlockNumber();
   const currentblock = blockno?.toString;
+  
   const handleAddCandidate = () => {
     setCandidates([...candidates, '']);
   };
+
+  // Effect to handle calculation of voting delay and period
+  useEffect(() => {
+    if (votingStart && votingEnd) {
+      const voteStartUnix = new Date(votingStart).getTime() / 1000;
+      const voteEndUnix = new Date(votingEnd).getTime() / 1000;
+      const currentTime = Math.floor(Date.now() / 1000);  // Current time in seconds (Unix Epoch)
+
+      // Calculate voting delay
+      const delay = voteStartUnix - currentTime;
+      setVotingDelay(delay.toString());  // Set the delay in seconds
+
+      // Calculate voting period
+      const period = voteEndUnix - voteStartUnix;
+      setVotingPeriod(period.toString());  // Set the period in seconds
+    }
+  }, [votingStart, votingEnd]);  // This effect runs whenever `votingStart` or `votingEnd` changes
 
   const handleCandidateChange = (index: number, value: string) => {
     const updatedCandidates = [...candidates];
@@ -58,8 +79,8 @@ function CreatePollInner() {
             pollName,
             pollDescription,
             candidates,
-            1, // Voting delay in blocks
-            300000, // Voting period in blocks
+            votingDelay, 
+            votingPeriod
           ]),
         ];
         setTransactionCall(call); // Store the transaction call
@@ -129,18 +150,36 @@ function CreatePollInner() {
           </button>
         </div>
 
-        {/* Voting Period End */}
+        {/* Voting Period Start */}
         <div className="md:col-span-5">
           <label htmlFor="votingPeriod" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            End Date: <br></br>{blockno ? `Current Block: ${blockno.toLocaleString()}` : 'Fetching block number...'}
+            Start Date:
           </label>
           <input
             type="datetime-local"
             className="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring focus:border-blue-300 dark:focus:border-blue-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             placeholder="Voting Period"
-            value={votingPeriod}
-            onChange={(e) => setVotingPeriod(e.target.value)}
+            value={votingStart}
+            onChange={(e) => setVotingStart(e.target.value)}
           />
+        </div>
+
+        {/* Voting Period End */}
+        <div className="md:col-span-5">
+          <label htmlFor="votingPeriod" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            End Date:
+          </label>
+          <input
+            type="datetime-local"
+            className="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring focus:border-blue-300 dark:focus:border-blue-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            placeholder="Voting Period"
+            value={votingEnd}
+            onChange={(e) => setVotingEnd(e.target.value)}
+          />
+        </div>
+
+        <div className="md:col-span-5 text-gray-700 dark:text-gray-300">
+          <strong>Voting Delay</strong> by: {votingDelay} seconds and <strong>Voting Period</strong> to last: {votingPeriod} seconds
         </div>
 
         {/* Create Poll Button */}
