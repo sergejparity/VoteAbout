@@ -55,7 +55,7 @@ mod VoteAbout {
         VoteCast: VoteCast,
         VoteCreated: VoteCreated,
         #[flat]
-        OwnableEvent: OwnableComponent::Event   
+        OwnableEvent: OwnableComponent::Event, 
     }
 
     #[derive(Drop, starknet::Event)]
@@ -91,7 +91,7 @@ mod VoteAbout {
             description: felt252,
             candidates: Span<ByteArray>,
             voting_delay: u64,
-            voting_period: u64
+            voting_period: u64,
         ) -> u32 {
             let mut vote_count = self.vote_count.read();
             vote_count += 1;
