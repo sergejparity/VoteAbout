@@ -159,9 +159,9 @@ mod VoteAbout {
 
         fn get_all_votes_details(self: @ContractState) -> Span<(u32, felt252, u64, u64)> {
             let mut results = ArrayTrait::new();
-            let mut i: u32 = 0;
+            let mut i: u32 = 1;
             loop {
-                if i >= self.vote_count.read() {
+                if i > self.vote_count.read() {
                     break;
                 }
                 let vote = self.votes.read(i);
