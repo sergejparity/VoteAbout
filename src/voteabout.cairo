@@ -4,6 +4,7 @@ trait IVoteAbout<TContractState> {
     fn get_candidate_count(self: @TContractState, vote_id: u32) -> u32;
     fn vote(ref self: TContractState, vote_id: u32, candidate_id: u32);
     fn get_vote_details(self: @TContractState, vote_id: u32) -> (felt252, felt252, u64, u64);
+    fn get_all_votes_details(self: @TContractState) -> Span<(u32, felt252, u64, u64)>;
     fn get_vote_count(self: @TContractState) -> u32;
     fn get_vote_results(self: @TContractState, vote_id: u32) -> Span<(felt252, u32)>;
     fn is_voting_active(self: @TContractState, vote_id: u32) -> bool;
@@ -52,7 +53,7 @@ mod VoteAbout {
         VoteCast: VoteCast,
         VoteCreated: VoteCreated,
         #[flat]
-        OwnableEvent: OwnableComponent::Event   
+        OwnableEvent: OwnableComponent::Event
     }
 
     #[derive(Drop, starknet::Event)]
@@ -135,11 +136,11 @@ mod VoteAbout {
             let vote = self.votes.read(vote_id);
             let caller = get_caller_address();
             let current_time = get_block_timestamp();
-            
+
             assert!(current_time >= vote.voting_start_time, "Voting has not started yet");
             assert!(current_time <= vote.voting_end_time, "Voting period has ended");
             assert!(!self.voters.read((vote_id, caller)), "Caller has already voted");
-            
+
             let current_votes = self.votes_cast.read((vote_id, candidate_id));
             self.votes_cast.write((vote_id, candidate_id), current_votes + 1);
             self.voters.write((vote_id, caller), true);
@@ -154,6 +155,20 @@ mod VoteAbout {
         fn get_vote_details(self: @ContractState, vote_id: u32) -> (felt252, felt252, u64, u64) {
             let vote = self.votes.read(vote_id);
             (vote.title, vote.description, vote.voting_start_time, vote.voting_end_time)
+        }
+
+        fn get_all_votes_details(self: @ContractState) -> Span<(u32, felt252, u64, u64)> {
+            let mut results = ArrayTrait::new();
+            let mut i: u32 = 0;
+            loop {
+                if i >= self.vote_count.read() {
+                    break;
+                }
+                let vote = self.votes.read(i);
+                results.append((i, vote.title, vote.voting_start_time, vote.voting_end_time));
+                i += 1;
+            };
+            results.span()
         }
 
         fn get_vote_count(self: @ContractState) -> u32 {
