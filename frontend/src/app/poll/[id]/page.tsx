@@ -103,7 +103,7 @@ const PollPage = ({ params }: { params: { id: string } }) => {
     try{
       if (selectedOption && contract && address) {
       const pollId = Number(id); 
-      const optionId = Number(selectedOption.id); 
+      const optionId = Number(selectedOption.id - 1); 
 
         const call = [
           contract.populate("vote", [
