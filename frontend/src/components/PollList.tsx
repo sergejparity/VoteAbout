@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useNetwork, useReadContract } from "@starknet-react/core";
+import { useNetwork,useContract,useAccount, useReadContract } from "@starknet-react/core";
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Tab } from '@headlessui/react';
@@ -23,6 +23,7 @@ function felt252ToString(felt: any) {
 
 const WalletBar = dynamic(() => import('./WalletBar'), { ssr: false });
 const Page: React.FC = () => {
+  const [transactionCall, setTransactionCall] = useState<any>(null);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Ongoing");
   const contractAddress = "0x03ca1a0363050a5811e3432b1acf9aaf403aefd460829ca1046d850c8d6725c8"; 

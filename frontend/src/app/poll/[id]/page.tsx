@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { RadioGroup } from '@headlessui/react';
-import { useNetwork, useReadContract } from "@starknet-react/core";
+import {  useNetwork,useContract,useAccount, useReadContract,useSendTransaction } from "@starknet-react/core";
 import { CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import contractAbi from '../../../abis/abi.json';
 
@@ -47,6 +47,9 @@ const PollPage = ({ params }: { params: { id: string } }) => {
 
 
   const contractAddress = "0x03ca1a0363050a5811e3432b1acf9aaf403aefd460829ca1046d850c8d6725c8"; 
+  const [transactionCall, setTransactionCall] = useState<any>(null);
+  const { address } = useAccount(); 
+  const { chain } = useNetwork(); 
   const { data:poll_description, refetch, fetchStatus, status, error:readError } = useReadContract({
     abi: contractAbi,
     functionName: "get_vote_details",
@@ -61,6 +64,15 @@ const PollPage = ({ params }: { params: { id: string } }) => {
     address: contractAddress,
     args: [id],
     watch: true,
+  });
+
+  const { contract } = useContract({
+    abi: contractAbi,
+    address: contractAddress,
+  });
+
+  const { send } = useSendTransaction({
+    calls: transactionCall,
   });
 
   // Handle loading and errors
@@ -86,10 +98,36 @@ const PollPage = ({ params }: { params: { id: string } }) => {
     name: felt252ToString(candidate[0]), // Convert the first element to string for the option name
   }));
 
-  const handleVote = () => {
-    if (selectedOption) {
-      // Handle voting logic here
-      alert(`You voted for option ID: ${selectedOption.id}, Poll ID: ${id}`);
+
+  const handleVote = async () => {
+    try{
+      if (selectedOption && contract && address) {
+      const pollId = Number(id); 
+      const optionId = Number(selectedOption.id); 
+
+        const call = [
+          contract.populate("vote", [
+            pollId,
+            optionId
+            
+          ]),
+        ];
+        setTransactionCall(call); // Store the transaction call
+
+        // Trigger the send after setting the transaction
+        await send();
+        alert(`You're voting for option ID: ${selectedOption.id}, Poll ID: ${id}`);
+      }
+      else{
+        throw new Error('Contract or address not available');
+      }
+    }
+    catch (e) {
+      console.error(e);
+      alert('Couldnt place vote. Please try again.');
+    } finally {
+      //to-do
+      
     }
   };
 
