@@ -1,348 +1,364 @@
 [
-    {
-      "type": "impl",
-      "name": "IVoteAboutImpl",
-      "interface_name": "voteabout::voteabout::IVoteAbout"
-    },
-    {
-      "type": "struct",
-      "name": "core::array::Span::<core::felt252>",
-      "members": [
-        {
-          "name": "snapshot",
-          "type": "@core::array::Array::<core::felt252>"
-        }
-      ]
-    },
-    {
-      "type": "struct",
-      "name": "core::array::Span::<(core::felt252, core::integer::u32)>",
-      "members": [
-        {
-          "name": "snapshot",
-          "type": "@core::array::Array::<(core::felt252, core::integer::u32)>"
-        }
-      ]
-    },
-    {
-      "type": "enum",
-      "name": "core::bool",
-      "variants": [
-        {
-          "name": "False",
-          "type": "()"
-        },
-        {
-          "name": "True",
-          "type": "()"
-        }
-      ]
-    },
-    {
-      "type": "interface",
-      "name": "voteabout::voteabout::IVoteAbout",
-      "items": [
-        {
-          "type": "function",
-          "name": "create_vote",
-          "inputs": [
-            {
-              "name": "title",
-              "type": "core::felt252"
-            },
-            {
-              "name": "description",
-              "type": "core::felt252"
-            },
-            {
-              "name": "candidates",
-              "type": "core::array::Span::<core::felt252>"
-            },
-            {
-              "name": "voting_delay",
-              "type": "core::integer::u64"
-            },
-            {
-              "name": "voting_period",
-              "type": "core::integer::u64"
-            }
-          ],
-          "outputs": [
-            {
-              "type": "core::integer::u32"
-            }
-          ],
-          "state_mutability": "external"
-        },
-        {
-          "type": "function",
-          "name": "get_candidate_count",
-          "inputs": [
-            {
-              "name": "vote_id",
-              "type": "core::integer::u32"
-            }
-          ],
-          "outputs": [
-            {
-              "type": "core::integer::u32"
-            }
-          ],
-          "state_mutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "vote",
-          "inputs": [
-            {
-              "name": "vote_id",
-              "type": "core::integer::u32"
-            },
-            {
-              "name": "candidate_id",
-              "type": "core::integer::u32"
-            }
-          ],
-          "outputs": [],
-          "state_mutability": "external"
-        },
-        {
-          "type": "function",
-          "name": "get_vote_details",
-          "inputs": [
-            {
-              "name": "vote_id",
-              "type": "core::integer::u32"
-            }
-          ],
-          "outputs": [
-            {
-              "type": "(core::felt252, core::felt252, core::integer::u64, core::integer::u64)"
-            }
-          ],
-          "state_mutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "get_vote_count",
-          "inputs": [],
-          "outputs": [
-            {
-              "type": "core::integer::u32"
-            }
-          ],
-          "state_mutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "get_vote_results",
-          "inputs": [
-            {
-              "name": "vote_id",
-              "type": "core::integer::u32"
-            }
-          ],
-          "outputs": [
-            {
-              "type": "core::array::Span::<(core::felt252, core::integer::u32)>"
-            }
-          ],
-          "state_mutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "is_voting_active",
-          "inputs": [
-            {
-              "name": "vote_id",
-              "type": "core::integer::u32"
-            }
-          ],
-          "outputs": [
-            {
-              "type": "core::bool"
-            }
-          ],
-          "state_mutability": "view"
-        }
-      ]
-    },
-    {
-      "type": "impl",
-      "name": "OwnableImpl",
-      "interface_name": "openzeppelin_access::ownable::interface::IOwnable"
-    },
-    {
-      "type": "interface",
-      "name": "openzeppelin_access::ownable::interface::IOwnable",
-      "items": [
-        {
-          "type": "function",
-          "name": "owner",
-          "inputs": [],
-          "outputs": [
-            {
-              "type": "core::starknet::contract_address::ContractAddress"
-            }
-          ],
-          "state_mutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "transfer_ownership",
-          "inputs": [
-            {
-              "name": "new_owner",
-              "type": "core::starknet::contract_address::ContractAddress"
-            }
-          ],
-          "outputs": [],
-          "state_mutability": "external"
-        },
-        {
-          "type": "function",
-          "name": "renounce_ownership",
-          "inputs": [],
-          "outputs": [],
-          "state_mutability": "external"
-        }
-      ]
-    },
-    {
-      "type": "constructor",
-      "name": "constructor",
-      "inputs": [
-        {
-          "name": "initial_owner",
-          "type": "core::starknet::contract_address::ContractAddress"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "voteabout::voteabout::VoteAbout::VoteCast",
-      "kind": "struct",
-      "members": [
-        {
-          "name": "vote_id",
-          "type": "core::integer::u32",
-          "kind": "key"
-        },
-        {
-          "name": "voter",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "kind": "data"
-        },
-        {
-          "name": "candidate_id",
-          "type": "core::integer::u32",
-          "kind": "data"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "voteabout::voteabout::VoteAbout::VoteCreated",
-      "kind": "struct",
-      "members": [
-        {
-          "name": "vote_id",
-          "type": "core::integer::u32",
-          "kind": "key"
-        },
-        {
-          "name": "title",
-          "type": "core::felt252",
-          "kind": "data"
-        },
-        {
-          "name": "description",
-          "type": "core::felt252",
-          "kind": "data"
-        },
-        {
-          "name": "voting_start_time",
-          "type": "core::integer::u64",
-          "kind": "data"
-        },
-        {
-          "name": "voting_end_time",
-          "type": "core::integer::u64",
-          "kind": "data"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
-      "kind": "struct",
-      "members": [
-        {
-          "name": "previous_owner",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "kind": "key"
-        },
-        {
-          "name": "new_owner",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "kind": "key"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
-      "kind": "struct",
-      "members": [
-        {
-          "name": "previous_owner",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "kind": "key"
-        },
-        {
-          "name": "new_owner",
-          "type": "core::starknet::contract_address::ContractAddress",
-          "kind": "key"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
-      "kind": "enum",
-      "variants": [
-        {
-          "name": "OwnershipTransferred",
-          "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
-          "kind": "nested"
-        },
-        {
-          "name": "OwnershipTransferStarted",
-          "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
-          "kind": "nested"
-        }
-      ]
-    },
-    {
-      "type": "event",
-      "name": "voteabout::voteabout::VoteAbout::Event",
-      "kind": "enum",
-      "variants": [
-        {
-          "name": "VoteCast",
-          "type": "voteabout::voteabout::VoteAbout::VoteCast",
-          "kind": "nested"
-        },
-        {
-          "name": "VoteCreated",
-          "type": "voteabout::voteabout::VoteAbout::VoteCreated",
-          "kind": "nested"
-        },
-        {
-          "name": "OwnableEvent",
-          "type": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
-          "kind": "flat"
-        }
-      ]
-    }
-  ]
+  {
+    "type": "impl",
+    "name": "IVoteAboutImpl",
+    "interface_name": "voteabout::voteabout::IVoteAbout"
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::felt252>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::felt252>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<(core::integer::u32, core::felt252, core::integer::u64, core::integer::u64)>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<(core::integer::u32, core::felt252, core::integer::u64, core::integer::u64)>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<(core::felt252, core::integer::u32)>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<(core::felt252, core::integer::u32)>"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "voteabout::voteabout::IVoteAbout",
+    "items": [
+      {
+        "type": "function",
+        "name": "create_vote",
+        "inputs": [
+          {
+            "name": "title",
+            "type": "core::felt252"
+          },
+          {
+            "name": "description",
+            "type": "core::felt252"
+          },
+          {
+            "name": "candidates",
+            "type": "core::array::Span::<core::felt252>"
+          },
+          {
+            "name": "voting_delay",
+            "type": "core::integer::u64"
+          },
+          {
+            "name": "voting_period",
+            "type": "core::integer::u64"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_candidate_count",
+        "inputs": [
+          {
+            "name": "vote_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "vote",
+        "inputs": [
+          {
+            "name": "vote_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "candidate_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_vote_details",
+        "inputs": [
+          {
+            "name": "vote_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::felt252, core::felt252, core::integer::u64, core::integer::u64)"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_all_votes_details",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::array::Span::<(core::integer::u32, core::felt252, core::integer::u64, core::integer::u64)>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_vote_count",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u32"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_vote_results",
+        "inputs": [
+          {
+            "name": "vote_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Span::<(core::felt252, core::integer::u32)>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "is_voting_active",
+        "inputs": [
+          {
+            "name": "vote_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "OwnableImpl",
+    "interface_name": "openzeppelin_access::ownable::interface::IOwnable"
+  },
+  {
+    "type": "interface",
+    "name": "openzeppelin_access::ownable::interface::IOwnable",
+    "items": [
+      {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer_ownership",
+        "inputs": [
+          {
+            "name": "new_owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "renounce_ownership",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": []
+  },
+  {
+    "type": "event",
+    "name": "voteabout::voteabout::VoteAbout::VoteCast",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "vote_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "voter",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "candidate_id",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "voteabout::voteabout::VoteAbout::VoteCreated",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "vote_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "title",
+        "type": "core::felt252",
+        "kind": "data"
+      },
+      {
+        "name": "description",
+        "type": "core::felt252",
+        "kind": "data"
+      },
+      {
+        "name": "voting_start_time",
+        "type": "core::integer::u64",
+        "kind": "data"
+      },
+      {
+        "name": "voting_end_time",
+        "type": "core::integer::u64",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "previous_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "new_owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "OwnershipTransferred",
+        "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferred",
+        "kind": "nested"
+      },
+      {
+        "name": "OwnershipTransferStarted",
+        "type": "openzeppelin_access::ownable::ownable::OwnableComponent::OwnershipTransferStarted",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "voteabout::voteabout::VoteAbout::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "VoteCast",
+        "type": "voteabout::voteabout::VoteAbout::VoteCast",
+        "kind": "nested"
+      },
+      {
+        "name": "VoteCreated",
+        "type": "voteabout::voteabout::VoteAbout::VoteCreated",
+        "kind": "nested"
+      },
+      {
+        "name": "OwnableEvent",
+        "type": "openzeppelin_access::ownable::ownable::OwnableComponent::Event",
+        "kind": "flat"
+      }
+    ]
+  }
+]

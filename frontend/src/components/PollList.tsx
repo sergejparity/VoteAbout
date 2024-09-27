@@ -1,27 +1,84 @@
 'use client';
 import { useState } from 'react';
+import { useNetwork, useReadContract } from "@starknet-react/core";
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Tab } from '@headlessui/react';
 import { ArrowRightIcon, ClockIcon, XCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import contractAbi from '../abis/abi.json';
+
+function felt252ToString(felt: any) {
+  // Convert the BigInt to a hex string
+  const hex = felt.toString(16);
+  // Split hex into pairs and convert to characters
+  let str = '';
+  for (let i = 0; i < hex.length; i += 2) {
+    const charCode = parseInt(hex.substring(i, i + 2), 16);
+    if (charCode === 0) break; // Stop at null character
+    str += String.fromCharCode(charCode);
+  }
+  return str;
+}
+
 
 const WalletBar = dynamic(() => import('./WalletBar'), { ssr: false });
-
 const Page: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Ongoing");
+  const contractAddress = "0x03ca1a0363050a5811e3432b1acf9aaf403aefd460829ca1046d850c8d6725c8"; 
+  const { data:poll_list, refetch, fetchStatus, status, error:readError } = useReadContract({
+    abi: contractAbi,
+    functionName: "get_all_votes_details",
+    address: contractAddress,
+    args: [],
+    watch: true,
+  });
 
-  const polls = [
-    { id: 101, number: 1, title: "Upgrade to Ethereum 2.0", startDate: "19 May, 2024", endDate: "30 May, 2024", status: 1 },
-    { id: 102, number: 2, title: "Implement Cross-Chain Interoperability", startDate: "20 August, 2024", endDate: "20 June, 2024", status: 1 },
-    { id: 103, number: 3, title: "Introduce Token Burn Mechanism", startDate: "10 October, 2024", endDate: "12 October, 2024", status: 2 },
-    { id: 104, number: 4, title: "Increase Block Size Limit", startDate: "19 May, 2024", endDate: "30 May, 2024", status: 3 },
-    { id: 105, number: 5, title: "Add Privacy Features to Smart Contracts", startDate: "19 May, 2024", endDate: "30 May, 2024", status: 1 },
-  ];
+  // Handle loading and errors
+  if (fetchStatus === "fetching") {
+    return <div>Loading polls...</div>;
+  }
+
+  if (readError) {
+    return <div>Error fetching poll data: {readError.message}</div>;
+  }
+
+
+  const polls = poll_list.map((poll:any, index:number) => {
+    const id = poll[0].toString(); // VoteId
+    const number = index + 1;
+    const title = felt252ToString(poll[1]); // Title from felt252
+    const startTimestamp = Number(poll[2].toString()) * 1000; // StartTime as timestamp (ms)
+    const endTimestamp = Number(poll[3].toString()) * 1000; // EndTime as timestamp (ms)
+    
+    const startDate = new Date(startTimestamp).toLocaleString(); // Human-readable start date
+    const endDate = new Date(endTimestamp).toLocaleString(); // Human-readable end date
+    
+    const currentTimestamp = new Date().getTime();
+    // Determine status based on current time and start/end dates
+    let status;
+    if (currentTimestamp < startTimestamp) {
+      status = 1; // Upcoming
+    } else if (currentTimestamp >= startTimestamp && currentTimestamp <= endTimestamp) {
+      status = 2; // Ongoing
+    } else if (currentTimestamp > endTimestamp) {
+      status = 3; // Closed
+    }
+  
+    return {
+      id,
+      number,
+      title,
+      startDate,
+      endDate,
+      status,  // Status logic based on date comparison
+    };
+  });
 
   const filteredPolls = (status: number) => polls.filter(poll => poll.status === status);
 
-  const handleVote = (id: number) => {
+  const handleVote = (id: number, title:string) => {
+    sessionStorage.setItem('pollTitle', title);
     router.push(`/poll/${id}`);
   };
 
@@ -53,7 +110,7 @@ const Page: React.FC = () => {
               {/* Ongoing Tab */}
               <Tab.Panel>
                 <div className="space-y-4">
-                  {filteredPolls(1).map(poll => (
+                  {filteredPolls(2).map(poll => (
                     <div
                       key={poll.id}
                       className="grid grid-cols-1 md:grid-cols-6 items-center gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 hover:shadow-lg transition-shadow"
@@ -76,7 +133,7 @@ const Page: React.FC = () => {
                       {/* Vote Button */}
                       <div className="flex justify-end col-span-1">
                         <button
-                          onClick={() => handleVote(poll.id)}
+                          onClick={() => handleVote(poll.id,poll.title)}
                           className="inline-flex items-center px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                         >
                           Vote <ArrowRightIcon className="ml-2 w-5 h-5" />
@@ -90,7 +147,7 @@ const Page: React.FC = () => {
               {/* Upcoming Tab */}
               <Tab.Panel>
                 <div className="space-y-4">
-                  {filteredPolls(2).map(poll => (
+                  {filteredPolls(1).map(poll => (
                     <div
                       key={poll.id}
                       className="grid grid-cols-1 md:grid-cols-5 items-center gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 hover:shadow-lg transition-shadow"
