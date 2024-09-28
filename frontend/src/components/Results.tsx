@@ -6,6 +6,23 @@ import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Abi, AbiEvent, AbiStruct } from 'starknet';
 const abi: Abi = require('../abis/abi.json');
 
+// Poll type definition
+interface Poll {
+  id: string;
+  number: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  status: number;
+}
+
+const POLL_STATUS = {
+  UPCOMING: 1,
+  ONGOING: 2,
+  CLOSED: 3,
+};
+
+
 function felt252ToString(felt: any) {
   const hex = felt.toString(16);
   let str = '';
@@ -42,7 +59,7 @@ const ResultsPage: React.FC = () => {
 
   // Fetch all votes details
   const { data: poll_list, refetch, fetchStatus, status, error: readError } = useReadContract({
-    abi: contractAbi,
+    abi,
     functionName: "get_all_votes_details",
     address: contractAddress,
     args: [],
@@ -55,7 +72,7 @@ const ResultsPage: React.FC = () => {
 
   // Query to fetch the candidates for the selected poll
   const { data: poll_candidates, refetch: refetchCandidates, fetchStatus: candStatus, error: candidateError } = useReadContract({
-    abi: contractAbi,
+    abi,
     functionName: "get_vote_results",
     address: contractAddress,
     args: selectedPollId ? [selectedPollId] : [0], // Pass selected poll ID as argument
@@ -103,10 +120,10 @@ const ResultsPage: React.FC = () => {
   }) || [];
 
   // Filter polls to only include ongoing and closed polls
-  const filteredPolls = polls.filter((poll) => poll.status === 'ongoing' || poll.status === 'closed');
+  const filteredPolls = polls.filter((poll:Poll) => poll.status === POLL_STATUS.ONGOING || poll.status === POLL_STATUS.CLOSED);
 
   // Default to the first available ongoing or closed poll if none is selected
-  const selectedPoll = filteredPolls.find(poll => poll.id === selectedPollId) || filteredPolls[0];
+  const selectedPoll = filteredPolls.find((poll:Poll) => poll.id === selectedPollId) || filteredPolls[0];
 
   const totalVotes = pollData.candidates.reduce((sum: number, candidate: any) => sum + candidate.votes, 0);
   const chartData = {
@@ -149,7 +166,7 @@ const ResultsPage: React.FC = () => {
         </option>
 
         {/* Ongoing and Closed Polls */}
-        {filteredPolls.map((poll) => (
+        {filteredPolls.map((poll: Poll) => (
           <option key={poll.id} value={poll.id}>
             {poll.title}
           </option>

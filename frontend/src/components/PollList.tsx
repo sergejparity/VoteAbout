@@ -8,6 +8,16 @@ import { ArrowRightIcon, ClockIcon, XCircleIcon, CalendarIcon } from '@heroicons
 import { Abi, AbiEvent, AbiStruct } from 'starknet';
 const abi: Abi = require('../abis/abi.json');
 
+// Poll type definition
+interface Poll {
+  id: string;
+  number: number;
+  title: string;
+  startDate: string;
+  endDate: string;
+  status: number;
+}
+
 function felt252ToString(felt: any) {
   // Convert the BigInt to a hex string
   const hex = felt.toString(16);
@@ -45,7 +55,7 @@ const Page: React.FC = () => {
   }
 
 
-  const polls = poll_list.map((poll:any, index:number) => {
+  const polls: Poll[] = poll_list.map((poll:any, index:number): Poll => {
     const id = poll[0].toString(); // VoteId
     const number = index + 1;
     const title = felt252ToString(poll[1]); // Title from felt252
@@ -65,6 +75,9 @@ const Page: React.FC = () => {
     } else if (currentTimestamp > endTimestamp) {
       status = 3; // Closed
     }
+    else {
+      status = 0; // Default fallback, if none of the above conditions match
+    }
   
     return {
       id,
@@ -76,7 +89,7 @@ const Page: React.FC = () => {
     };
   });
 
-  const filteredPolls = (status: number) => polls.filter(poll => poll.status === status);
+  const filteredPolls = (status: number): Poll[] => polls.filter(poll => poll.status === status);
 
   const handleVote = (id: number, title:string) => {
     sessionStorage.setItem('pollTitle', title);
@@ -89,7 +102,8 @@ const Page: React.FC = () => {
         <h3 className="text-3xl mt-10 text-center font-bold uppercase dark:text-gray-100">Polls</h3>
         <div className="mt-6">
           {/* Tabs */}
-          <Tab.Group onChange={setActiveTab}>
+          {/* <Tab.Group onChange={setActiveTab}> */}
+          <Tab.Group onChange={(index) => setActiveTab(["Ongoing", "Upcoming", "Closed"][index])}>
             <Tab.List className="flex justify-center space-x-4 mb-5">
               {["Ongoing", "Upcoming", "Closed"].map(tab => (
                 <Tab
@@ -134,7 +148,7 @@ const Page: React.FC = () => {
                       {/* Vote Button */}
                       <div className="flex justify-end col-span-1">
                         <button
-                          onClick={() => handleVote(poll.id,poll.title)}
+                          onClick={() => handleVote(Number(poll.id),poll.title)}
                           className="inline-flex items-center px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                         >
                           Vote <ArrowRightIcon className="ml-2 w-5 h-5" />
