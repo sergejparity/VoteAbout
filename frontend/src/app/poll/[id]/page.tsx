@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { RadioGroup } from '@headlessui/react';
 import {  useNetwork,useContract,useAccount, useReadContract,useSendTransaction } from "@starknet-react/core";
 import { CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import contractAbi from '../../../abis/abi.json';
+import { Abi, AbiEvent, AbiStruct } from 'starknet';
+const abi: Abi = require('../../../abis/abi.json');
 
 
 function felt252ToString(felt: any) {
@@ -51,7 +52,7 @@ const PollPage = ({ params }: { params: { id: string } }) => {
   const { address } = useAccount(); 
   const { chain } = useNetwork(); 
   const { data:poll_description, refetch, fetchStatus, status, error:readError } = useReadContract({
-    abi: contractAbi,
+    abi,
     functionName: "get_vote_details",
     address: contractAddress,
     args: [id],
@@ -59,7 +60,7 @@ const PollPage = ({ params }: { params: { id: string } }) => {
   });
 
   const { data:poll_candidates, refetch: refetchcandidates, fetchStatus: candStatus, status: cs, error:candidateError } = useReadContract({
-    abi: contractAbi,
+    abi,
     functionName: "get_vote_results",
     address: contractAddress,
     args: [id],
@@ -67,7 +68,7 @@ const PollPage = ({ params }: { params: { id: string } }) => {
   });
 
   const { contract } = useContract({
-    abi: contractAbi,
+    abi,
     address: contractAddress,
   });
 

@@ -5,7 +5,8 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Tab } from '@headlessui/react';
 import { ArrowRightIcon, ClockIcon, XCircleIcon, CalendarIcon } from '@heroicons/react/24/outline';
-import contractAbi from '../abis/abi.json';
+import { Abi, AbiEvent, AbiStruct } from 'starknet';
+const abi: Abi = require('../abis/abi.json');
 
 function felt252ToString(felt: any) {
   // Convert the BigInt to a hex string
@@ -23,12 +24,11 @@ function felt252ToString(felt: any) {
 
 const WalletBar = dynamic(() => import('./WalletBar'), { ssr: false });
 const Page: React.FC = () => {
-  const [transactionCall, setTransactionCall] = useState<any>(null);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Ongoing");
   const contractAddress = "0x03ca1a0363050a5811e3432b1acf9aaf403aefd460829ca1046d850c8d6725c8"; 
   const { data:poll_list, refetch, fetchStatus, status, error:readError } = useReadContract({
-    abi: contractAbi,
+    abi,
     functionName: "get_all_votes_details",
     address: contractAddress,
     args: [],
