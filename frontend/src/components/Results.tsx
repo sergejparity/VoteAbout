@@ -6,23 +6,9 @@ import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Abi, AbiEvent, AbiStruct } from 'starknet';
 const abi: Abi = require('../abis/abi.json');
 
-// Poll type definition
-interface Poll {
-  id: string;
-  number: number;
-  title: string;
-  startDate: string;
-  endDate: string;
-  status: number;
-}
+Chart.register(ArcElement, Tooltip, Legend);
 
-const POLL_STATUS = {
-  UPCOMING: 1,
-  ONGOING: 2,
-  CLOSED: 3,
-};
-
-
+// Helper function to convert felt252 data to string
 function felt252ToString(felt: any) {
   const hex = felt.toString(16);
   let str = '';
@@ -33,8 +19,6 @@ function felt252ToString(felt: any) {
   }
   return str;
 }
-
-Chart.register(ArcElement, Tooltip, Legend);
 
 const chartOptions = {
   responsive: true,
@@ -75,7 +59,7 @@ const ResultsPage: React.FC = () => {
     abi,
     functionName: "get_vote_results",
     address: contractAddress,
-    args: selectedPollId ? [selectedPollId] : [0], // Pass selected poll ID as argument
+    args: selectedPollId ? [parseInt(selectedPollId)] : [0], // Convert to number if selected
     watch: true,
   });
 
@@ -95,7 +79,7 @@ const ResultsPage: React.FC = () => {
 
   // Transform the poll list data and filter ongoing and closed polls
   const polls = poll_list?.map((poll: any, index: number) => {
-    const id = poll[0].toString();
+    const id = poll[0].toString(); // Convert ID to string
     const title = felt252ToString(poll[1]);
     const startTimestamp = Number(poll[2].toString()) * 1000;
     const endTimestamp = Number(poll[3].toString()) * 1000;
@@ -120,10 +104,16 @@ const ResultsPage: React.FC = () => {
   }) || [];
 
   // Filter polls to only include ongoing and closed polls
-  const filteredPolls = polls.filter((poll:Poll) => poll.status === POLL_STATUS.ONGOING || poll.status === POLL_STATUS.CLOSED);
+  const filteredPolls = polls.filter((poll:any) => poll.status === 'ongoing' || poll.status === 'closed');
 
   // Default to the first available ongoing or closed poll if none is selected
-  const selectedPoll = filteredPolls.find((poll:Poll) => poll.id === selectedPollId) || filteredPolls[0];
+  const selectedPoll = filteredPolls.find((poll:any) => poll.id === selectedPollId) || filteredPolls[0];
+
+  useEffect(() => {
+    if (selectedPoll && selectedPoll.id) {
+      setSelectedPollId(selectedPoll.id); // Set default poll if available
+    }
+  }, [selectedPoll]);
 
   const totalVotes = pollData.candidates.reduce((sum: number, candidate: any) => sum + candidate.votes, 0);
   const chartData = {
@@ -155,25 +145,20 @@ const ResultsPage: React.FC = () => {
           Select Poll
         </label>
         <select
-        id="pollSelect"
-        value={selectedPollId}
-        onChange={(e) => setSelectedPollId(e.target.value)}
-        className="block w-full max-w-xs mx-auto p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring focus:border-blue-300 dark:bg-gray-800 dark:text-gray-300"
-      >
-        {/* Unselectable Placeholder */}
-        <option value="" disabled>
-          Select an ongoing or closed poll
-        </option>
-
-        {/* Ongoing and Closed Polls */}
-        {filteredPolls.map((poll: Poll) => (
-          <option key={poll.id} value={poll.id}>
-            {poll.title}
+          id="pollSelect"
+          value={selectedPollId}
+          onChange={(e) => setSelectedPollId(e.target.value)}
+          className="block w-full max-w-xs mx-auto p-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring focus:border-blue-300 dark:bg-gray-800 dark:text-gray-300"
+        >
+          <option value="" disabled>
+            Select an ongoing or closed poll
           </option>
-        ))}
-      </select>
-
-
+          {filteredPolls.map((poll:any) => (
+            <option key={poll.id} value={poll.id}>
+              {poll.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Main Content */}
