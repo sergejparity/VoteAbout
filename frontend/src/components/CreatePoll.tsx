@@ -6,9 +6,9 @@ import {
   useSendTransaction,
   useBlockNumber,
 } from "@starknet-react/core";
-import type { Abi } from "starknet"; 
 import { Button } from './ui/Button';
-import contractAbi from '../abis/abi.json';
+import { Abi, AbiEvent, AbiStruct } from 'starknet';
+const abi: Abi = require('../abis/abi.json');
 
 export function CreatePoll() {
   return <CreatePollInner />;
@@ -61,7 +61,7 @@ function CreatePollInner() {
 
   const contractAddress = "0x03ca1a0363050a5811e3432b1acf9aaf403aefd460829ca1046d850c8d6725c8"; 
   const { contract } = useContract({
-    abi: contractAbi,
+    abi,
     address: contractAddress,
   });
 

@@ -3,7 +3,8 @@ import { useReadContract } from "@starknet-react/core";
 import { Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
 import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
-import contractAbi from '../abis/abi.json';
+import { Abi, AbiEvent, AbiStruct } from 'starknet';
+const abi: Abi = require('../abis/abi.json');
 
 function felt252ToString(felt: any) {
   const hex = felt.toString(16);
