@@ -5,6 +5,7 @@ import {
   useNetwork,
   useSendTransaction,
   useBlockNumber,
+  useTransactionReceipt,
 } from "@starknet-react/core";
 import { Button } from './ui/Button';
 import { Abi, AbiEvent, AbiStruct } from 'starknet';
@@ -65,13 +66,36 @@ function CreatePollInner() {
     address: contractAddress,
   });
 
-  const { send } = useSendTransaction({
+  const { send: pollAsync,
+    data:createPollData,
+    isPending: createPollPending,
+  } = useSendTransaction({
     calls: transactionCall,
   });
 
+  const { 
+    data: waitData, 
+    status: waitStatus,
+    error:receiptError,
+    isLoading: waitIsLoading,
+    isError: waitIsError,
+    error: waitError,
+  } = useTransactionReceipt({
+    hash: createPollData?.transaction_hash, watch:true
+  });
+
+  const LoadingState = ({ message }: { message: string }) => (
+    <div className="flex items-center space-x-2">
+      <div className="animate-spin">
+        <svg className="h-5 w-5 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      </div>
+      <span>{message}</span>
+    </div>
+  );
+
   const handleCreatePoll = async () => {
-    setLoading(true);
-    setError(null);
     try {
       if (contract && address) {
         // Dynamically prepare the transaction call and update state
@@ -84,22 +108,52 @@ function CreatePollInner() {
             votingPeriod
           ]),
         ];
-        setTransactionCall(call); // Store the transaction call
+        setTransactionCall(call);
 
-        // Trigger the send after setting the transaction
-        await send();
-
-        console.log('Poll Created:', { candidates });
       } else {
         throw new Error('Contract or address not available');
       }
     } catch (e) {
-      console.error(e);
       setError('Failed to create poll. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (transactionCall && !createPollPending) {
+      pollAsync();
+    }
+  }, [transactionCall]);
+
+  const buttonContent = () => {
+    if (createPollPending) {
+      return <LoadingState message="Confirm Poll Creation" />;
+    }
+    if (waitIsLoading) {
+      return <LoadingState message="Creating Poll...please wait!..." />;
+    }
+    if (waitStatus === "error") {
+      return <LoadingState message="Could not create poll..." />;
+    }
+    if (waitStatus === "success") {
+      return "Poll created, Create New";
+    }
+    return "Create Poll";
+  }
+
+  useEffect(() => {
+    if (waitStatus === "success") {
+      // Reset form fields
+      setPollName('');
+      setPollDescription('');
+      setCandidates(['']);
+      setVotingStart('');
+      setVotingEnd('');
+      setVotingDelay('');
+      setVotingPeriod('');
+      
+      setSuccess(true);  // Show success modal
+    }
+  }, [waitStatus]);  
 
   return (
     <div className="mt-8 w-full max-w-5xl mx-auto p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg bg-white dark:bg-gray-800">
@@ -187,10 +241,9 @@ function CreatePollInner() {
         <div className="md:col-span-5">
           <button
             onClick={handleCreatePoll}
-            disabled={loading}
-            className={`mt-6 w-full md:w-auto px-6 py-3 text-white rounded-lg ${loading ? 'bg-gray-400 cursor-not-allowed dark:bg-gray-500' : 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700'}`}
-          >
-            {loading ? 'Creating Poll...' : 'Create Poll'}
+            disabled={createPollPending}
+            className={`mt-6 w-full md:w-auto px-6 py-3 text-white rounded-lg ${createPollPending? 'bg-gray-400 cursor-not-allowed dark:bg-gray-500' : 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700'}`}>
+            {buttonContent()}
           </button>
         </div>
       </div>
