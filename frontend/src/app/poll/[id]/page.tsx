@@ -135,7 +135,7 @@ const PollPage = ({ params }: { params: { id: string } }) => {
   return (
     <div className="h-screen flex flex-col dark:bg-gray-900 dark:text-gray-100">
       <main className="container mx-auto px-4 mt-5">
-        <h3 className="text-3xl font-bold text-center dark:text-white mb-6">{pollTitle}</h3>
+        <h3 className="text-3xl font-bold text-center dark:text-white mb-6">{felt252ToString(poll_description[0])}</h3>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 md:p-8">
           <RadioGroup value={selectedOption} onChange={setSelectedOption}>
