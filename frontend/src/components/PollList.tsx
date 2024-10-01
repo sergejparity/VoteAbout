@@ -96,6 +96,20 @@ const Page: React.FC = () => {
     router.push(`/poll/${id}`);
   };
 
+  const handleShare = (id: number) => {
+    const pollUrl = `${window.location.origin}/poll/${id}`;
+    if (navigator.share) {
+      navigator.share({
+        title: "Check out this poll",
+        url: pollUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(pollUrl);
+      alert('URL copied to clipboard!');
+    }
+  };
+  
+
   return (
     <div className="h-screen flex flex-col dark:bg-gray-900 dark:text-gray-100">
       <main className="container mx-auto mb-3 px-4 w-full mt-5">
@@ -145,8 +159,15 @@ const Page: React.FC = () => {
                         <p>End: {poll.endDate}</p>
                       </div>
 
-                      {/* Vote Button */}
-                      <div className="flex justify-end col-span-1">
+                      {/* Action Buttons */}
+                      <div className="flex justify-end col-span-1 space-x-4">
+                        <button
+                          onClick={() => handleShare(Number(poll.id))}
+                          className="inline-flex items-center px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Share Poll
+                        </button>
+
                         <button
                           onClick={() => handleVote(Number(poll.id),poll.title)}
                           className="inline-flex items-center px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
@@ -179,6 +200,14 @@ const Page: React.FC = () => {
                       <div className="mt-4 flex items-center text-yellow-500 md:mt-0 md:col-span-5">
                         <ClockIcon className="w-5 h-5 mr-2" />
                         Upcoming
+                      </div>
+                      <div className="mt-4 flex items-center col-span-1 space-x-4">
+                        <button
+                          onClick={() => handleShare(Number(poll.id))}
+                          className="inline-flex items-center px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Share Poll
+                        </button>
                       </div>
                     </div>
                   ))}
