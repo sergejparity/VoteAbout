@@ -34,6 +34,7 @@ mod VoteAbout {
         candidates: starknet::storage::Map<(u32, u32), felt252>,
         votes_cast: starknet::storage::Map<(u32, u32), u32>,
         voters: starknet::storage::Map<(u32, ContractAddress), bool>,
+        whitelist: starknet::storage::Map<ContractAddress, bool>, 
         #[substorage(v0)]
         ownable: OwnableComponent::Storage
     }
@@ -79,6 +80,13 @@ mod VoteAbout {
         let initial_owner = get_caller_address();
         self.vote_count.write(0);
         self.ownable.initializer(initial_owner);
+    }
+
+    fn add_to_whitelist(ref self: ContractState, voter: ContractAddress) {
+        let owner = self.ownable.owner(); 
+        let caller = get_caller_address(); 
+        assert!(owner == caller, "Caller is not the owner");  
+        self.whitelist.write(voter, true);
     }
 
     #[abi(embed_v0)]
@@ -139,7 +147,8 @@ mod VoteAbout {
 
             assert!(current_time >= vote.voting_start_time, "Voting has not started yet");
             assert!(current_time <= vote.voting_end_time, "Voting period has ended");
-            assert!(!self.voters.read((vote_id, caller)), "Caller has already voted");
+            assert!(!self.voters.read((vote_id, caller)), "Voter has already voted");
+            assert!(self.whitelist.read(caller), "Voter is not whitelisted"); 
 
             let current_votes = self.votes_cast.read((vote_id, candidate_id));
             self.votes_cast.write((vote_id, candidate_id), current_votes + 1);
